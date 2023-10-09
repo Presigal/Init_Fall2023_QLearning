@@ -12,7 +12,7 @@ class DeepQNetwork(nn.Module):
         self.fc2_dims = fc2_dims
         self.n_actions = n_actions
         self.fc1 = nn.Linear(*self.input_dims, self.fc1_dims)
-        self.fc2 = nn.Linear(self.fc1_dims, self.n_actions)
+        self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
         self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
         self.loss = nn.MSELoss()
@@ -42,19 +42,19 @@ class Agent():
         self.Q_eval = DeepQNetwork(self.lr, n_actions =n_actions, input_dims=input_dims,
                                    fc1_dims=256, fc2_dims=256)
         
-        self.state_memory = np.zeros((self.mem_size, *input_dims), dtype=np.float32)
+        self.state_memory = np.zeros((self.mem_size, *input_dims), 
+                                        dtype=np.float32)
         
         self.new_state_memory = np.zeros((self.mem_size, *input_dims),
-                                         dtype=np.float32)
+                                        dtype=np.float32)
         
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
         self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
         self.terminal_memory = np.zeros(self.mem_size, dtype=np.bool_)
 
     def store_transition(self, state, action, reward, state_, done):
+        #For the time being, index here is not a valid number
         index = self.mem_cntr % self.mem_size
-        print(f"*********************************{self.state_memory.shape}*{type(self.state_memory)}********************************")
-        print(f"*********************************{state}*{type(state)}********************************")
         self.state_memory[index] = state
         self.new_state_memory[index] = state_
         self.reward_memory[index] = reward
@@ -92,7 +92,7 @@ class Agent():
         action_batch = self.action_memory[batch]
 
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
-        q_next = self.Q_eval.forward[new_state_batch]
+        q_next = self.Q_eval.forward(new_state_batch)
         q_next[terminal_batch] = 0.0
 
         q_target = reward_batch + self.gamma  *T.max(q_next, dim=1)[0]
@@ -101,8 +101,8 @@ class Agent():
         loss.backward()
         self.Q_eval.optimizer.step()
 
-        self.epsilon = self.epsilon - self.eps_dec if self.epsilon > self.eps_min \
-                        else self.eps_min
+        self.epsilon = self.epsilon - self.eps_dec if self.epsilon > self.eps_end \
+                        else self.eps_end
         
 
 
